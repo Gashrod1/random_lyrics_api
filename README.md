@@ -4,7 +4,7 @@ Une petite API FastAPI qui retourne des punchlines aléatoires issues de morceau
 
 ---
 
-## 🚀 Installation
+# 🚀 Installation
 
 ```bash
 pip install -r requirements.txt
