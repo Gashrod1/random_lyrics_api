@@ -3,16 +3,27 @@ import requests
 from bs4 import BeautifulSoup
 import random
 from pydantic import BaseModel
+import json
+import re
 
-app = FastAPI(title="Damso Lyrics API")
+app = FastAPI(title="Lyrics API")
+
+def random_rappeur_from_file():
+    # Ouvrir et lire le fichier JSON
+    with open("rappeurs.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    
+    # Récupérer la liste des rappeurs
+    rappeurs = data["top_20_rappeurs_francais"]
+    
+    # Retourner un nom aléatoire
+    rapper = random.choice(rappeurs)
+    print(f"Rappeur choisi : {rapper}")
+    return rapper
 
 # ------------------ CONFIG ------------------
 token = "86EtEqGDV_SeOtaFyy4g28JeYVJS9ht_XBEY77sjzgEJ8Ep-qrFR5Bs1IVWVHlV2"
 headers = {'Authorization': f'Bearer {token}'}
-query = "Damso"
-url = f"https://api.genius.com/search?q={query}"
-response = requests.get(url, headers=headers)
-data = response.json()
 
 # Cache pour éviter plusieurs requêtes
 lyrics_cache = {}
@@ -23,6 +34,7 @@ class SongLineRequest(BaseModel):
     current_line: str
 
 # ------------------ FUNCTIONS ------------------
+
 def get_lyrics_from_genius(url):
     headers = {
         "User-Agent": (
@@ -52,6 +64,10 @@ def clean_lyrics_text(lyrics):
     return lyrics[start_index:]
 
 def random_hit():
+    query = random_rappeur_from_file()
+    url = f"https://api.genius.com/search?q={query}"
+    response = requests.get(url, headers=headers)
+    data = response.json()
     hits = data['response']['hits']
     if not hits:
         return None
@@ -78,20 +94,25 @@ def next_line(song_id, current_line):
         if idx + 1 < len(lines):
             return lines[idx + 1]
     return None
-
 # ------------------ API ENDPOINTS ------------------
 @app.get("/random_punchline")
 def api_random_punchline():
     song = random_hit()
     if not song:
         raise HTTPException(status_code=404, detail="No song found")
+    
     punch, all_lines = random_punchline(song)
     if not punch:
         raise HTTPException(status_code=404, detail="No lyrics found")
+    
+    # Mettre à jour la punchline avec la version nettoyée
+    punch_cleaned = re.sub(r"\[.*?\]", "", punch).strip()
+    
     return {
         "song_id": song["id"],
         "title": song["title"],
-        "punchline": punch,
+        "punchline": punch_cleaned,
+        "next_line": next_line(song["id"], punch),
     }
 
 @app.post("/next_line")
@@ -100,3 +121,4 @@ def api_next_line(request: SongLineRequest):
     if line is None:
         raise HTTPException(status_code=404, detail="Next line not found")
     return {"next_line": line}
+ 
