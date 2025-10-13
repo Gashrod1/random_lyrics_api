@@ -92,7 +92,6 @@ def api_random_punchline():
         "song_id": song["id"],
         "title": song["title"],
         "punchline": punch,
-        "all_lines": all_lines
     }
 
 @app.post("/next_line")
