@@ -15,7 +15,7 @@ python -m uvicorn api:app --reload
 ```
 
 **🔗 Routes disponibles**
-GET /random_punchline
+## GET /random_punchline
 
 Renvoie une punchline aléatoire tirée d’un morceau.
 
