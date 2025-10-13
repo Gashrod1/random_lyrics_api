@@ -14,7 +14,7 @@ pip install -r requirements.txt
 python -m uvicorn api:app --reload
 ```
 
-**🔗 Routes disponibles**
+# 🔗 Routes disponibles
 ## GET /random_punchline
 
 Renvoie une punchline aléatoire tirée d’un morceau.
