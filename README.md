@@ -24,12 +24,6 @@ Renvoie une punchline aléatoire tirée d’un morceau.
   "song_id": 123456,
   "title": "Feu de bois",
   "punchline": "T'étais ma femme, t'étais ma go, t'étais ma pote",
-  "all_lines": [
-    "...",
-    "T'étais ma femme, t'étais ma go, t'étais ma pote",
-    "T'étais mon seul repère, j'étais ton sale gosse",
-    "..."
-  ]
 }
 ```
 
