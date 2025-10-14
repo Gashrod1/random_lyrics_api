@@ -120,5 +120,7 @@ def api_next_line(request: SongLineRequest):
     line = next_line(request.song_id, request.current_line)
     if line is None:
         raise HTTPException(status_code=404, detail="Next line not found")
+    if "[" in line and "]" in line:
+        api_next_line(request.song_id, request.line)
     return {"next_line": line}
  
