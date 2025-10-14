@@ -69,9 +69,29 @@ def random_hit():
     response = requests.get(url, headers=headers)
     data = response.json()
     hits = data['response']['hits']
+
     if not hits:
         return None
-    return random.choice(hits)["result"]
+
+    # On normalise le nom du rappeur pour comparaison
+    query_norm = query.lower().replace(" ", "").replace("-", "")
+
+    # On filtre uniquement les chansons dont l'artiste principal correspond vraiment
+    filtered_hits = []
+    for hit in hits:
+        artist_name = hit["result"]["primary_artist"]["name"]
+        artist_norm = artist_name.lower().replace(" ", "").replace("-", "")
+        if artist_norm == query_norm:
+            filtered_hits.append(hit["result"])
+
+    # Si aucun résultat strictement correct, on prend un aléatoire parmi les hits de base
+    valid_hits = filtered_hits if filtered_hits else [h["result"] for h in hits]
+
+    song = random.choice(valid_hits)
+    print(f"🎤 Rappeur choisi : {query} — Titre choisi : {song['title']} ({song['primary_artist']['name']})")
+    return song
+
+
 
 def random_punchline(song):
     lines = lyrics_cache.get(song['id'])
@@ -94,6 +114,9 @@ def next_line(song_id, current_line):
         if idx + 1 < len(lines):
             return lines[idx + 1]
     return None
+
+def clean_punch(punch):
+    return re.sub(r"\[.*?\]", "", punch).strip()
 # ------------------ API ENDPOINTS ------------------
 @app.get("/random_punchline")
 def api_random_punchline():
@@ -105,14 +128,12 @@ def api_random_punchline():
     if not punch:
         raise HTTPException(status_code=404, detail="No lyrics found")
     
-    # Mettre à jour la punchline avec la version nettoyée
-    punch_cleaned = re.sub(r"\[.*?\]", "", punch).strip()
-    
     return {
         "song_id": song["id"],
         "title": song["title"],
-        "punchline": punch_cleaned,
-        "next_line": next_line(song["id"], punch),
+        "punchline": clean_punch(punch),
+        "next_line": clean_punch(next_line(song["id"], punch)),
+        "artist": song["primary_artist"]["name"],
     }
 
 @app.post("/next_line")
