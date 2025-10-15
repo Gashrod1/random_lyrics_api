@@ -63,13 +63,35 @@ def get_lyrics_from_genius(url):
     return cleaned
 
 def clean_lyrics_text(lyrics):
-    # Ignore les premières lignes avec crochets
+    """
+    Nettoie les paroles :
+    - Supprime tout avant la première ligne entre crochets
+    - Supprime les lignes commençant par [
+    - Supprime les parenthèses et leur contenu
+    """
+    # Trouver la première ligne contenant un crochet
     start_index = 0
     for i, line in enumerate(lyrics):
-        if line.strip().startswith("["):
-            start_index = i + 1
+        if "[" in line and "]" in line:
+            start_index = i
             break
-    return lyrics[start_index:]
+
+    # On ne garde que les lignes à partir du premier crochet
+    lyrics = lyrics[start_index:]
+
+    cleaned = []
+    for line in lyrics:
+        # Ignorer les lignes qui commencent par un crochet
+        if line.strip().startswith("["):
+            continue
+        # Supprimer les parenthèses et leur contenu
+        line = re.sub(r"\(.*?\)", "", line)
+        # Nettoyer les espaces et ignorer les lignes vides
+        line = line.strip()
+        if line:
+            cleaned.append(line)
+
+    return cleaned
 
 def random_hit():
     query = random_rappeur_from_file()
@@ -105,6 +127,7 @@ def random_punchline(song):
     lines = lyrics_cache.get(song['id'])
     if not lines:
         lyrics = clean_lyrics_text(get_lyrics_from_genius(song['url']))
+        print(lyrics)
         if not lyrics:
             return None, []
         lyrics_cache[song['id']] = lyrics
