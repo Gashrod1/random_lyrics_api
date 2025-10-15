@@ -5,8 +5,16 @@ import random
 from pydantic import BaseModel
 import json
 import re
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Lyrics API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # URL de votre frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def random_rappeur_from_file():
     # Ouvrir et lire le fichier JSON
