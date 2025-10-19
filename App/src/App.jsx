@@ -1,11 +1,14 @@
+
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { useGame } from './hooks/useGame';
 import GameHeader from './components/GameHeader';
-import StartScreen from './components/StartScreen';
+import ModeSelector from './components/ModeSelector';
 import SongCard from './components/SongCard';
+import QuoteCard from './components/QuoteCard';
 import GameInput from './components/GameInput';
+import ArtistSelector from './components/ArtistSelector';
 import AnswerReveal from './components/AnswerReveal';
 import GameOverScreen from './components/GameOverScreen';
 
@@ -16,6 +19,7 @@ function App() {
     submitAnswer,
     nextRound,
     updateUserInput,
+    updateSelectedArtist,
     endGame,
   } = useGame();
 
@@ -23,8 +27,8 @@ function App() {
     switch (gameState.gameStatus) {
       case 'idle':
         return (
-          <StartScreen 
-            onStart={startNewGame} 
+          <ModeSelector 
+            onSelectMode={startNewGame} 
             isLoading={gameState.isLoading}
           />
         );
@@ -32,18 +36,50 @@ function App() {
       case 'playing':
         return (
           <div className="max-w-4xl mx-auto">
-            <GameHeader score={gameState.score} round={gameState.round} />
-            {gameState.currentSong && (
-              <>
-                <SongCard song={gameState.currentSong} />
-                <GameInput
-                  value={gameState.userInput}
-                  onChange={updateUserInput}
-                  onSubmit={submitAnswer}
-                  disabled={gameState.isLoading}
-                  isLoading={gameState.isLoading}
-                />
-              </>
+            <GameHeader 
+              score={gameState.score} 
+              round={gameState.round} 
+              gameMode={gameState.gameMode}
+            />
+            
+            {gameState.gameMode === 'artist' ? (
+              // Mode "Qui a dit ça ?"
+              gameState.currentSong && (
+                <>
+                  <QuoteCard quote={gameState.currentSong} />
+                  <ArtistSelector
+                    options={gameState.artistOptions}
+                    selectedArtist={gameState.selectedArtist}
+                    onSelectArtist={updateSelectedArtist}
+                    disabled={gameState.isLoading}
+                  />
+                  <div className="text-center">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={submitAnswer}
+                      disabled={gameState.isLoading || !gameState.selectedArtist}
+                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {gameState.isLoading ? 'Chargement...' : 'Valider'}
+                    </motion.button>
+                  </div>
+                </>
+              )
+            ) : (
+              // Mode "N'oubliez pas les paroles"
+              gameState.currentSong && (
+                <>
+                  <SongCard song={gameState.currentSong} />
+                  <GameInput
+                    value={gameState.userInput}
+                    onChange={updateUserInput}
+                    onSubmit={submitAnswer}
+                    disabled={gameState.isLoading}
+                    isLoading={gameState.isLoading}
+                  />
+                </>
+              )
             )}
           </div>
         );
@@ -51,15 +87,27 @@ function App() {
       case 'waiting':
         return (
           <div className="max-w-4xl mx-auto">
-            <GameHeader score={gameState.score} round={gameState.round} />
+            <GameHeader 
+              score={gameState.score} 
+              round={gameState.round} 
+              gameMode={gameState.gameMode}
+            />
             {gameState.currentSong && gameState.showAnswer && (
               <AnswerReveal
-                correctAnswer={gameState.currentSong.next_line}
+                correctAnswer={gameState.gameMode === 'artist' 
+                  ? gameState.currentSong.correct_artist 
+                  : gameState.currentSong.next_line
+                }
                 userAnswer={gameState.userInput}
-                isCorrect={gameState.currentSong.next_line.toLowerCase().includes(gameState.userInput.toLowerCase())}
+                selectedArtist={gameState.selectedArtist}
+                isCorrect={gameState.gameMode === 'artist' 
+                  ? gameState.selectedArtist === gameState.currentSong.correct_artist
+                  : gameState.currentSong.next_line.toLowerCase().includes(gameState.userInput.toLowerCase())
+                }
                 onNextRound={nextRound}
                 onEndGame={endGame}
                 round={gameState.round}
+                gameMode={gameState.gameMode}
               />
             )}
           </div>
@@ -70,7 +118,8 @@ function App() {
           <GameOverScreen
             score={gameState.score}
             round={gameState.round}
-            onRestart={startNewGame}
+            onRestart={() => startNewGame(gameState.gameMode)}
+            gameMode={gameState.gameMode}
           />
         );
         

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Configuration de l'API - remplacez par l'URL de votre API Python
-const API_BASE_URL = 'http://127.0.0.1:8000/'; // Changez selon votre configuration
+const API_BASE_URL = 'http://localhost:8000'; // Changez selon votre configuration
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,6 +14,11 @@ const api = axios.create({
 export const lyricsApi = {
   getRandomPunchline: async () => {
     const response = await api.get('/random_punchline');
+    return response.data;
+  },
+
+  getRandomQuote: async () => {
+    const response = await api.get('/random_quote');
     return response.data;
   },
 

@@ -1,45 +1,39 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import {Trophy, Target} from 'lucide-react';
+import {Trophy, Hash, Music, User} from 'lucide-react';
 
-const GameHeader = ({ score, round }) => {
+const GameHeader = ({ score, round, gameMode }) => {
+  const modeConfig = {
+    lyrics: { icon: Music, label: 'N\'oubliez pas les paroles', color: 'text-purple-400' },
+    artist: { icon: User, label: 'Qui a dit ça ?', color: 'text-blue-400' }
+  };
+
+  const config = modeConfig[gameMode] || modeConfig.lyrics;
+  const IconComponent = config.icon;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="text-center mb-8"
+      className="flex flex-wrap items-center justify-between mb-8 p-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl shadow-xl border border-gray-700"
     >
-      <motion.h1
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 mb-6"
-      >
-        🎤 N'oubliez pas les paroles
-      </motion.h1>
+      <div className="flex items-center gap-4 mb-4 md:mb-0">
+        <IconComponent className={`w-6 h-6 ${config.color}`} />
+        <h2 className="text-xl font-bold text-white">
+          {config.label}
+        </h2>
+      </div>
       
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-xl text-gray-300 mb-8"
-      >
-        Édition Rap Français
-      </motion.p>
-      
-      <div className="flex justify-center items-center gap-8 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+      <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-yellow-400" />
-          <span className="text-2xl font-bold text-white">{score}</span>
-          <span className="text-gray-400">points</span>
+          <Trophy className="w-5 h-5 text-yellow-400" />
+          <span className="text-lg font-bold text-white">{score} pts</span>
         </div>
         
-        <div className="w-px h-8 bg-gray-600"></div>
-        
         <div className="flex items-center gap-2">
-          <Target className="w-6 h-6 text-purple-400" />
-          <span className="text-2xl font-bold text-white">{round}</span>
-          <span className="text-gray-400">manche</span>
+          <Hash className="w-5 h-5 text-gray-400" />
+          <span className="text-lg font-semibold text-gray-300">Manche {round}</span>
         </div>
       </div>
     </motion.div>

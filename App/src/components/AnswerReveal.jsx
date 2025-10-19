@@ -3,54 +3,73 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {CheckCircle, XCircle, ArrowRight, Trophy} from 'lucide-react';
 
-const AnswerReveal = ({ correctAnswer, userAnswer, isCorrect, onNextRound, onEndGame, round }) => {
+const AnswerReveal = ({ 
+  correctAnswer, 
+  userAnswer, 
+  isCorrect, 
+  onNextRound, 
+  onEndGame, 
+  round,
+  gameMode,
+  selectedArtist 
+}) => {
+  const maxRounds = 10;
+  const isLastRound = round >= maxRounds;
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-700"
+      className="text-center"
     >
-      <div className="text-center mb-6">
-        {isCorrect ? (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex items-center justify-center gap-3 text-green-400 mb-4"
-          >
-            <CheckCircle className="w-8 h-8" />
-            <span className="text-2xl font-bold">Bonne réponse !</span>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex items-center justify-center gap-3 text-red-400 mb-4"
-          >
-            <XCircle className="w-8 h-8" />
-            <span className="text-2xl font-bold">Mauvaise réponse</span>
-          </motion.div>
-        )}
-      </div>
-
-      <div className="space-y-4 mb-8">
-        <div className="bg-gray-700/50 p-4 rounded-xl">
-          <p className="text-gray-400 text-sm mb-2">Votre réponse :</p>
-          <p className="text-white text-lg">"{userAnswer}"</p>
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-700 mb-8">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          {isCorrect ? (
+            <CheckCircle className="w-8 h-8 text-green-400" />
+          ) : (
+            <XCircle className="w-8 h-8 text-red-400" />
+          )}
+          <h3 className={`text-2xl font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+            {isCorrect ? 'Bonne réponse !' : 'Mauvaise réponse !'}
+          </h3>
         </div>
-        
-        <div className="bg-green-900/20 border border-green-500/30 p-4 rounded-xl">
-          <p className="text-green-400 text-sm mb-2">Réponse correcte :</p>
-          <p className="text-white text-lg font-semibold">"{correctAnswer}"</p>
+
+        <div className="space-y-4">
+          {gameMode === 'artist' ? (
+            <>
+              <div className="text-gray-300">
+                <span className="font-semibold">Votre réponse :</span>{' '}
+                <span className={selectedArtist === correctAnswer ? 'text-green-400' : 'text-red-400'}>
+                  {selectedArtist || 'Aucune sélection'}
+                </span>
+              </div>
+              <div className="text-gray-300">
+                <span className="font-semibold">Bonne réponse :</span>{' '}
+                <span className="text-green-400 font-bold">{correctAnswer}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-gray-300">
+                <span className="font-semibold">Votre réponse :</span>{' '}
+                <span className="text-yellow-400">"{userAnswer}"</span>
+              </div>
+              <div className="text-gray-300">
+                <span className="font-semibold">Bonne réponse :</span>{' '}
+                <span className="text-green-400 font-bold">"{correctAnswer}"</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="flex gap-4 justify-center">
-        {round < 10 ? (
+        {!isLastRound ? (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNextRound}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all"
+            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all"
           >
             <ArrowRight className="w-5 h-5" />
             Manche suivante
@@ -61,10 +80,10 @@ const AnswerReveal = ({ correctAnswer, userAnswer, isCorrect, onNextRound, onEnd
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onEndGame}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-semibold rounded-xl hover:from-yellow-700 hover:to-orange-700 transition-all"
+          className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all"
         >
           <Trophy className="w-5 h-5" />
-          Terminer
+          {isLastRound ? 'Voir le score final' : 'Terminer le jeu'}
         </motion.button>
       </div>
     </motion.div>
