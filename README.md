@@ -45,6 +45,26 @@ Renvoie la ligne suivante d’une chanson, à partir de la ligne actuelle.
 }
 ```
 
+# Application web | N'oubliez pas les paroles  
+
+Web app qui exploite l'api.
+
+# Prérequis 
+
+```bash
+python -m uvicorn api:app --reload
+```
+
+# Lancer l'application web sur un autre terminal
+
+'''
+npm install
+'''
+
+'''
+npm run dev
+'''
+
 
 
 

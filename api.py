@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException
 import requests
 from bs4 import BeautifulSoup
@@ -28,6 +29,20 @@ def random_rappeur_from_file():
     rapper = random.choice(rappeurs)
     print(f"Rappeur choisi : {rapper}")
     return rapper
+
+def get_random_artists(exclude_artist=None, count=3):
+    """Récupère des artistes aléatoirement depuis le fichier JSON"""
+    with open("rappeurs.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    
+    rappeurs = data["top_20_rappeurs_francais"]
+    
+    # Exclure l'artiste principal si spécifié
+    if exclude_artist:
+        rappeurs = [r for r in rappeurs if r.lower() != exclude_artist.lower()]
+    
+    # Retourner un échantillon aléatoire
+    return random.sample(rappeurs, min(count, len(rappeurs)))
 
 # ------------------ CONFIG ------------------
 token = "86EtEqGDV_SeOtaFyy4g28JeYVJS9ht_XBEY77sjzgEJ8Ep-qrFR5Bs1IVWVHlV2"
@@ -121,8 +136,6 @@ def random_hit():
     print(f"🎤 Rappeur choisi : {query} — Titre choisi : {song['title']} ({song['primary_artist']['name']})")
     return song
 
-
-
 def random_punchline(song):
     lines = lyrics_cache.get(song['id'])
     if not lines:
@@ -134,7 +147,14 @@ def random_punchline(song):
         lines = lyrics
     if not lines:
         return None, lines
-    return random.choice(lines), lines
+    
+    # Choisir une ligne qui a au moins une ligne suivante
+    valid_indices = [i for i in range(len(lines) - 1)]
+    if not valid_indices:
+        return None, lines
+    
+    start_idx = random.choice(valid_indices)
+    return start_idx, lines
 
 def next_line(song_id, current_line):
     lines = lyrics_cache.get(song_id)
@@ -148,6 +168,18 @@ def next_line(song_id, current_line):
 
 def clean_punch(punch):
     return re.sub(r"\[.*?\]", "", punch).strip()
+
+def get_answer_info(text):
+    """Retourne des informations sur la réponse attendue"""
+    words = text.split()
+    letters = len(text.replace(" ", ""))
+    return {
+        "word_count": len(words),
+        "letter_count": letters,
+        "first_letter": text[0].upper() if text else "",
+        "hint": f"{len(words)} mot{'s' if len(words) > 1 else ''}, {letters} lettre{'s' if letters > 1 else ''}"
+    }
+
 # ------------------ API ENDPOINTS ------------------
 @app.get("/random_punchline")
 def api_random_punchline():
@@ -155,16 +187,78 @@ def api_random_punchline():
     if not song:
         raise HTTPException(status_code=404, detail="No song found")
     
-    punch, all_lines = random_punchline(song)
-    if not punch:
+    start_idx, all_lines = random_punchline(song)
+    if start_idx is None:
         raise HTTPException(status_code=404, detail="No lyrics found")
+    
+    # Prendre 2 phrases consécutives
+    first_line = clean_punch(all_lines[start_idx])
+    second_line = clean_punch(all_lines[start_idx + 1]) if start_idx + 1 < len(all_lines) else ""
+    
+    # La ligne à deviner (3ème ligne)
+    answer_line = ""
+    if start_idx + 2 < len(all_lines):
+        answer_line = clean_punch(all_lines[start_idx + 2])
+    
+    if not answer_line:
+        raise HTTPException(status_code=404, detail="No answer line found")
+    
+    # Créer le punchline avec 2 phrases
+    punchline = first_line
+    if second_line:
+        punchline += "\n" + second_line
+    
+    answer_info = get_answer_info(answer_line)
     
     return {
         "song_id": song["id"],
         "title": song["title"],
-        "punchline": clean_punch(punch),
-        "next_line": clean_punch(next_line(song["id"], punch)),
+        "punchline": punchline,
+        "next_line": answer_line,
         "artist": song["primary_artist"]["name"],
+        "answer_info": answer_info
+    }
+
+@app.get("/random_quote")
+def api_random_quote():
+    song = random_hit()
+    if not song:
+        raise HTTPException(status_code=404, detail="No song found")
+    
+    start_idx, all_lines = random_punchline(song)
+    if start_idx is None:
+        raise HTTPException(status_code=404, detail="No lyrics found")
+    
+    # Générer 1-3 phrases consécutives
+    num_lines = random.randint(1, 3)
+    quote_lines = []
+    
+    for i in range(num_lines):
+        if start_idx + i < len(all_lines):
+            line = clean_punch(all_lines[start_idx + i])
+            if line:  # Seulement ajouter les lignes non vides
+                quote_lines.append(line)
+    
+    if not quote_lines:
+        raise HTTPException(status_code=404, detail="No valid quote found")
+    
+    quote = "\n".join(quote_lines)
+    correct_artist = song["primary_artist"]["name"]
+    
+    # Générer 3 autres artistes aléatoirement
+    other_artists = get_random_artists(exclude_artist=correct_artist, count=3)
+    
+    # Créer la liste des options (4 au total)
+    options = [correct_artist] + other_artists
+    random.shuffle(options)  # Mélanger pour que la bonne réponse ne soit pas toujours en premier
+    
+    return {
+        "song_id": song["id"],
+        "title": song["title"],
+        "quote": quote,
+        "options": options,
+        "correct_artist": correct_artist,
+        "artist": song["primary_artist"]["name"]
     }
 
 @app.post("/next_line")
@@ -175,4 +269,3 @@ def api_next_line(request: SongLineRequest):
     if "[" in line and "]" in line:
         api_next_line(request.song_id, request.line)
     return {"next_line": line}
- 
