@@ -57,13 +57,13 @@ python -m uvicorn api:app --reload
 
 # Lancer l'application web sur un autre terminal
 
-'''
+```
 npm install
-'''
+```
 
-'''
+```
 npm run dev
-'''
+```
 
 
 
