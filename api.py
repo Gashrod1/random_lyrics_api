@@ -1,4 +1,4 @@
-
+import time
 from fastapi import FastAPI, HTTPException
 import requests
 from bs4 import BeautifulSoup
@@ -18,17 +18,14 @@ app.add_middleware(
 )
 
 def random_rappeur_from_file():
-    # Ouvrir et lire le fichier JSON
     with open("rappeurs.json", "r", encoding="utf-8") as f:
         data = json.load(f)
-    
-    # Récupérer la liste des rappeurs
+
     rappeurs = data["top_20_rappeurs_francais"]
-    
-    # Retourner un nom aléatoire
     rapper = random.choice(rappeurs)
-    print(f"Rappeur choisi : {rapper}")
+    print(f"🎤 Rappeur choisi : {rapper['name']} (ID: {rapper['id']})")
     return rapper
+
 
 def get_random_artists(exclude_artist=None, count=3):
     """Récupère des artistes aléatoirement depuis le fichier JSON"""
@@ -39,7 +36,7 @@ def get_random_artists(exclude_artist=None, count=3):
     
     # Exclure l'artiste principal si spécifié
     if exclude_artist:
-        rappeurs = [r for r in rappeurs if r.lower() != exclude_artist.lower()]
+        rappeurs = [r for r in rappeurs if r["name"].lower() != exclude_artist.lower()]
     
     # Retourner un échantillon aléatoire
     return random.sample(rappeurs, min(count, len(rappeurs)))
@@ -109,32 +106,58 @@ def clean_lyrics_text(lyrics):
     return cleaned
 
 def random_hit():
-    query = random_rappeur_from_file()
-    url = f"https://api.genius.com/search?q={query}"
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    hits = data['response']['hits']
+    rapper = random_rappeur_from_file()
+    artist_id = rapper.get("id") if isinstance(rapper, dict) else None
+    artist_name = rapper.get("name") if isinstance(rapper, dict) else rapper
 
-    if not hits:
+    if not artist_id:
+        print(f"❌ Aucun ID pour {artist_name}")
         return None
 
-    # On normalise le nom du rappeur pour comparaison
-    query_norm = query.lower().replace(" ", "").replace("-", "")
+    print(f"🎤 Rappeur choisi : {artist_name} (ID: {artist_id})")
 
-    # On filtre uniquement les chansons dont l'artiste principal correspond vraiment
-    filtered_hits = []
-    for hit in hits:
-        artist_name = hit["result"]["primary_artist"]["name"]
-        artist_norm = artist_name.lower().replace(" ", "").replace("-", "")
-        if artist_norm == query_norm:
-            filtered_hits.append(hit["result"])
+    # Récupérer les chansons de l'artiste
+    songs = []
+    page = 1
+    while True:
+        url = f"https://api.genius.com/artists/{artist_id}/songs?sort=popularity&per_page=50&page={page}"
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"❌ Erreur Genius ({response.status_code}) pour {artist_name}")
+            break
+        data = response.json()
+        new_songs = data.get("response", {}).get("songs", [])
+        if not new_songs:
+            break
+        songs.extend(new_songs)
+        if not data["response"].get("next_page"):
+            break
+        page += 1
+        time.sleep(0.3)  # éviter le rate limit
 
-    # Si aucun résultat strictement correct, on prend un aléatoire parmi les hits de base
-    valid_hits = filtered_hits if filtered_hits else [h["result"] for h in hits]
+    if not songs:
+        print(f"❌ Aucun titre trouvé pour {artist_name}")
+        return None
 
-    song = random.choice(valid_hits)
-    print(f"🎤 Rappeur choisi : {query} — Titre choisi : {song['title']} ({song['primary_artist']['name']})")
+    # 🔍 Filtrer les chansons "propres"
+    def is_clean_title(title: str) -> bool:
+        banned_words = ["remix", "instrumental", "livret"]
+        if any(bad in title.lower() for bad in banned_words):
+            return False
+        if "[" in title and "]" in title :
+            return False
+        return True
+
+    clean_songs = [s for s in songs if is_clean_title(s["title"])]
+
+    if not clean_songs:
+        print(f"⚠️ Aucun titre 'propre' trouvé pour {artist_name}, on prend quand même un titre brut.")
+        clean_songs = songs
+
+    song = random.choice(clean_songs)
+    print(f"🎶 Titre choisi : {song['title']} ({artist_name})")
     return song
+
 
 def random_punchline(song):
     lines = lyrics_cache.get(song['id'])

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -8,7 +7,9 @@ import ModeSelector from './components/ModeSelector';
 import SongCard from './components/SongCard';
 import QuoteCard from './components/QuoteCard';
 import GameInput from './components/GameInput';
+import ArtistInput from './components/ArtistInput';
 import ArtistSelector from './components/ArtistSelector';
+import SongTitleInput from './components/SongTitleInput';
 import AnswerReveal from './components/AnswerReveal';
 import GameOverScreen from './components/GameOverScreen';
 
@@ -20,6 +21,8 @@ function App() {
     nextRound,
     updateUserInput,
     updateSelectedArtist,
+    updateSongTitleInput,
+    skipSongTitle,
     endGame,
   } = useGame();
 
@@ -43,27 +46,55 @@ function App() {
             />
             
             {gameState.gameMode === 'artist' ? (
-              // Mode "Qui a dit ça ?"
+              // Mode "Qui a dit ça ?" avec phases
               gameState.currentSong && (
                 <>
-                  <QuoteCard quote={gameState.currentSong} />
-                  <ArtistSelector
-                    options={gameState.artistOptions}
-                    selectedArtist={gameState.selectedArtist}
-                    onSelectArtist={updateSelectedArtist}
-                    disabled={gameState.isLoading}
+                  <QuoteCard 
+                    quote={gameState.currentSong} 
+                    gamePhase={gameState.artistPhase}
                   />
-                  <div className="text-center">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={submitAnswer}
-                      disabled={gameState.isLoading || !gameState.selectedArtist}
-                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      {gameState.isLoading ? 'Chargement...' : 'Valider'}
-                    </motion.button>
-                  </div>
+                  
+                  {gameState.artistPhase === 'free_input' && (
+                    <ArtistInput
+                      value={gameState.userInput}
+                      onChange={updateUserInput}
+                      onSubmit={submitAnswer}
+                      disabled={gameState.isLoading}
+                      placeholder="Nom de l'artiste..."
+                    />
+                  )}
+                  
+                  {gameState.artistPhase === 'multiple_choice' && (
+                    <>
+                      <ArtistSelector
+                        options={gameState.artistOptions}
+                        selectedArtist={gameState.selectedArtist}
+                        onSelectArtist={updateSelectedArtist}
+                        disabled={gameState.isLoading}
+                      />
+                      <div className="text-center">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={submitAnswer}
+                          disabled={gameState.isLoading || !gameState.selectedArtist}
+                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                          {gameState.isLoading ? 'Chargement...' : 'Valider'}
+                        </motion.button>
+                      </div>
+                    </>
+                  )}
+                  
+                  {gameState.artistPhase === 'song_title' && (
+                    <SongTitleInput
+                      value={gameState.songTitleInput}
+                      onChange={updateSongTitleInput}
+                      onSubmit={submitAnswer}
+                      onSkip={skipSongTitle}
+                      disabled={gameState.isLoading}
+                    />
+                  )}
                 </>
               )
             ) : (
@@ -101,13 +132,16 @@ function App() {
                 userAnswer={gameState.userInput}
                 selectedArtist={gameState.selectedArtist}
                 isCorrect={gameState.gameMode === 'artist' 
-                  ? gameState.selectedArtist === gameState.currentSong.correct_artist
+                  ? gameState.artistFound || gameState.selectedArtist === gameState.currentSong.correct_artist
                   : gameState.currentSong.next_line.toLowerCase().includes(gameState.userInput.toLowerCase())
                 }
                 onNextRound={nextRound}
                 onEndGame={endGame}
                 round={gameState.round}
                 gameMode={gameState.gameMode}
+                songTitle={gameState.currentSong.title}
+                artistFound={gameState.artistFound}
+                songTitleGuessed={gameState.songTitleInput && gameState.currentSong.title}
               />
             )}
           </div>

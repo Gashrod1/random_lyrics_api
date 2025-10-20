@@ -1,25 +1,88 @@
 {
   "top_20_rappeurs_francais": [
-    "Ninho",
-    "Gazo",
-    "Damso",
-    "Sch",
-    "Naps",
-    "Booba",
-    "Sdm",
-    "Zola",
-    "Tiakola",
-    "Plk",
-    "Leto",
-    "Maes",
-    "Ziak",
-    "Kerchak",
-    "Lomepal",
-    "Josman",
-    "Freeze-corleone",
-    "Niska",
-    "Houdi",
-    "Vald",
-    "Fave-fra"
+    {
+      "name": "Damso",
+      "id": 45855
+    },
+    {
+      "name": "Tiakola",
+      "id": 1444864
+    },
+    {
+      "name": "GIMS",
+      "id": 13325
+    },
+    {
+      "name": "Niska",
+      "id": 234413
+    },
+    {
+      "name": "Ninho",
+      "id": 71286
+    },
+    {
+      "name": "Gazo",
+      "id": 23012
+    },
+    {
+      "name": "Josman",
+      "id": 153477
+    },
+    {
+      "name": "Zola",
+      "id": 1101709
+    },
+    {
+      "name": "Hamza",
+      "id": 74111
+    },
+    {
+      "name": "SDM",
+      "id": 1904845
+    },
+    {
+      "name": "PLK",
+      "id": 128813
+    },
+    {
+      "name": "SCH",
+      "id": 276476
+    },
+    {
+      "name": "Booba",
+      "id": 1282
+    },
+    {
+      "name": "Ziak",
+      "id": 2113831
+    },
+    {
+      "name": "KeBlack",
+      "id": 328799
+    },
+    {
+      "name": "Heuss L’enfoiré",
+      "id": 1242021
+    },
+    {
+      "name": "Laylow",
+      "id": 308564
+    },
+    {
+      "name": "Lefa",
+      "id": 15927
+    },
+    {
+      "name": "Leto",
+      "id": 183940
+    },
+    {
+      "name": "Lorenzo",
+      "id": 339523
+    },
+    {
+      "name": "Vald",
+      "id": 19217
+    }
   ]
 }
